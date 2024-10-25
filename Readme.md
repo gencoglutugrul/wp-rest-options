@@ -73,5 +73,4 @@ You can choose a rule to restrict/allow access to specific options. The availabl
 ![Screenshot of the settings page](./assets/settings-page.png)
 
 ## License
-This project is licensed under the GPLv2 License - see the [LICENSE](LICENSE) file for details.
-```
+This project is licensed under the GNU GPLv2 License - see the [LICENSE](LICENSE) file for details.
