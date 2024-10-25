@@ -57,7 +57,7 @@ class RestOptions
      * Routing
      */
     const ROUTE_NAMESPACE = 'rest-options/v1';
-    const ROUTE_PATH_GET_OPTIONS = '/get-options';
+    const ROUTE_PATH_GET_OPTIONS = '/options';
 
     public function __construct()
     {
@@ -96,10 +96,18 @@ class RestOptions
      */
     public function validateApiKey($request)
     {
-        $api_key = $request->get_header('x-api-key');
-        $stored_key = get_option(self::OPTION_NAME_API_KEY);
+        $apiKeyOnHeader = $request->get_header('x-api-key');
+        $apiKeyOnDatabase = get_option(self::OPTION_NAME_API_KEY, null);
 
-        if ($api_key && hash_equals($stored_key, $api_key)) {
+        if (is_null($apiKeyOnDatabase)) {
+            return new WP_Error(
+                'unauthorized',
+                'API key is not generated yet. Go to Settings > Rest Options to generate one.',
+                ['status' => 401]
+            );
+        }
+
+        if ($apiKeyOnHeader && hash_equals($apiKeyOnDatabase, $apiKeyOnHeader)) {
             return true;
         }
 
@@ -342,8 +350,15 @@ class RestOptions
             . 'Content-Type: application/json' . "\n"
             . "\n"
             . '{' . "\n"
-            . '  "option_name_1": "option_value_1",' . "\n"
-            . '  "option_name_2": "option_value_2"' . "\n"
+            . '  "code": "success",' . "\n"
+            . '  "message": "Options retrieved successfully.",' . "\n"
+            . '  "data": {' . "\n"
+            . '    "status": 200,' . "\n"
+            . '    "options": {' . "\n"
+            . '      "option_name_1": "option_value_1",' . "\n"
+            . '      "option_name_2": "option_value_2"' . "\n"
+            . '    }' . "\n"
+            . '  }' . "\n"
             . '}' . "\n"
             . '</pre>'
             . '<p>Here are the other cases:</p>'
@@ -354,7 +369,15 @@ class RestOptions
             . '<li>If the request body is not a JSON object, the response will be a 400 Bad Request.</li>'
             . '<li>If the request body does not contain an "options" key, the response will be a 400 Bad Request.</li>'
             . '<li>If the "options" key is not an array, the response will be a 400 Bad Request.</li>'
-            . '</ul>';
+            . '</ul>'
+            . '<h3>Troubleshooting</h3>'
+            . '<p><strong>Not Found (404) response with the correct endpoint:</strong></p>'
+            . '<p> You might have issues with permalinks. '
+            . 'Make sure you select a permalink structure other than "Plain" in the '
+            . '<a href="' . admin_url('options-permalink.php') . '">Permalink Settings</a> page.</p>'
+            . '<p>Or, you can try to combine the endpoint with index.php like this: '
+            . '<code>' . site_url() . '/index.php/wp-json/' . self::ROUTE_NAMESPACE . self::ROUTE_PATH_GET_OPTIONS
+            . '</code></p>';
     }
 }
 
