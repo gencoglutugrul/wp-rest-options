@@ -119,7 +119,21 @@ class RestOptions
             return new WP_Error('invalid_param', 'Options must be an array', ['status' => 400]);
         }
 
-        $response = [];
+		if (empty($optionsRequested)) {
+			return new WP_Error('invalid_param', 'Options array must not be empty', ['status' => 400]);
+		}
+
+		if (count($optionsRequested) > 100) {
+			return new WP_Error('invalid_param', 'Options array must not contain more than 100 items', ['status' => 400]);
+		}
+
+		foreach ($optionsRequested as $oneOptionRequested) {
+			if (false === is_string($oneOptionRequested)) {
+				return new WP_Error('invalid_param', 'Each option must be a string', ['status' => 400]);
+			}
+		}
+
+        $optionsRetrived = [];
         $restrictionType = get_option(self::OPTION_NAME_RESTRICTION_TYPE, self::DEFAULT_RESTRICTION_TYPE);
         $restrictionList = get_option(self::OPTION_NAME_RESTRICTION_LIST, self::DEFAULT_RESTRICTION_LIST);
         $restrictionListItems = array_filter(
@@ -131,21 +145,32 @@ class RestOptions
 
         foreach ($optionsRequested as $oneOptionRequested) {
             if ($restrictionType === self::RESTRICTION_TYPE_ALLOW_ALL) {
-                $response[$oneOptionRequested] = get_option($oneOptionRequested, null);
+                $optionsRetrived[$oneOptionRequested] = get_option($oneOptionRequested, null);
             }
 
             if ($restrictionType === self::RESTRICTION_TYPE_ALLOW_ONLY) {
                 if (in_array($oneOptionRequested, $restrictionListItems)) {
-                    $response[$oneOptionRequested] = get_option($oneOptionRequested, null);
+                    $optionsRetrived[$oneOptionRequested] = get_option($oneOptionRequested, null);
                 }
             }
 
             if ($restrictionType === self::RESTRICTION_TYPE_RESTRICT_ONLY) {
                 if (!in_array($oneOptionRequested, $restrictionListItems)) {
-                    $response[$oneOptionRequested] = get_option($oneOptionRequested, null);
+                    $optionsRetrived[$oneOptionRequested] = get_option($oneOptionRequested, null);
                 }
             }
         }
+
+		// This is the default response format for the WP REST API. It's weird, but we'll use it.
+	    // Because we want to keep the response format consistent with error responses.
+		$response = [
+			"code" => "success",
+			"message" => "Options retrieved successfully.",
+			"data" => [
+				"status" => 200,
+				"options" => $optionsRetrived
+			]
+		];
 
         return rest_ensure_response($response);
     }
