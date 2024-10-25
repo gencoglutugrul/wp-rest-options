@@ -199,7 +199,7 @@ class RestOptions
         if (isset($_POST[self::INPUT_NAME_SAVE_OPTIONS])) {
             check_admin_referer(self::PREFIX_NONCE . self::INPUT_NAME_SAVE_OPTIONS);
             $restrictionType = $_POST[self::INPUT_NAME_RESTRICTION_TYPE];
-            $restrictionList = sanitize_text_field($_POST[self::INPUT_NAME_RESTRICTION_LIST]);
+            $restrictionList = sanitize_textarea_field($_POST[self::INPUT_NAME_RESTRICTION_LIST]);
 
             update_option(self::OPTION_NAME_RESTRICTION_LIST, $restrictionList);
             update_option(self::OPTION_NAME_RESTRICTION_TYPE, $restrictionType);
