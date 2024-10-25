@@ -1,0 +1,5 @@
+# Since we directly map the wordpress plugins directory to the src directory,
+# We need to ignore the default wordpress plugins.
+src/akismet
+src/hello.php
+src/index.php
