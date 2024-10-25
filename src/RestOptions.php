@@ -241,7 +241,7 @@ class RestOptions
 
         return '<form method="POST" style="margin-bottom:20px;">'
             . '<h2>API Key</h2>'
-            . '<p><strong>Current API Key:</strong> ' . esc_html($apiKey) . '</p>'
+            . '<p><strong>Current API Key:</strong> <code>' . esc_html($apiKey) . '</code></p>'
             . $this->buildSubmitButton(self::INPUT_NAME_GENERATE_API_KEY, 'Generate New API Key')
             . '</form>';
     }
