@@ -48,6 +48,7 @@ class RestOptions
     const INPUT_NAME_RESTRICTION_LIST = 'restriction_list';
     const INPUT_NAME_SAVE_OPTIONS = 'save_options';
     const INPUT_NAME_GENERATE_API_KEY = 'generate_api_key';
+    const PREFIX_NONCE = 'rest_options_nonce_for_';
 
     /**
      * Request body keys.
@@ -189,12 +190,14 @@ class RestOptions
     public function renderSettingsPage()
     {
         if (isset($_POST[self::INPUT_NAME_GENERATE_API_KEY])) {
+            check_admin_referer(self::PREFIX_NONCE . self::INPUT_NAME_GENERATE_API_KEY);
             $apiKey = $this->generateRandomApiKey();
 
             update_option(self::OPTION_NAME_API_KEY, $apiKey);
         }
 
         if (isset($_POST[self::INPUT_NAME_SAVE_OPTIONS])) {
+            check_admin_referer(self::PREFIX_NONCE . self::INPUT_NAME_SAVE_OPTIONS);
             $restrictionType = $_POST[self::INPUT_NAME_RESTRICTION_TYPE];
             $restrictionList = sanitize_text_field($_POST[self::INPUT_NAME_RESTRICTION_LIST]);
 
@@ -242,6 +245,7 @@ class RestOptions
         return '<form method="POST" style="margin-bottom:20px;">'
             . '<h2>API Key</h2>'
             . '<p><strong>Current API Key:</strong> <code>' . esc_html($apiKey) . '</code></p>'
+            . $this->buildNonce(self::INPUT_NAME_GENERATE_API_KEY)
             . $this->buildSubmitButton(self::INPUT_NAME_GENERATE_API_KEY, 'Generate New API Key')
             . '</form>';
     }
@@ -259,6 +263,7 @@ class RestOptions
             . $this->buildInputRadioRestrictOnly($restrictionType)
             . $this->buildInputRadioAllowAll($restrictionType)
             . $this->buildTextareaForRestrictionList($restrictionList)
+            . $this->buildNonce(self::INPUT_NAME_SAVE_OPTIONS)
             . $this->buildSubmitButton(self::INPUT_NAME_SAVE_OPTIONS, 'Save Options')
             . '</form>';
     }
@@ -317,6 +322,16 @@ class RestOptions
     private function buildSubmitButton($name, $value)
     {
         return '<input type="submit" name="' . $name . '" class="button button-primary" value="' . $value . '" />';
+    }
+
+    private function buildNonce($action)
+    {
+        return wp_nonce_field(
+            self::PREFIX_NONCE . $action,
+            '_wpnonce',
+            true,
+            false
+        );
     }
 
     private function buildDocumentation()
