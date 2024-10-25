@@ -53,11 +53,11 @@ class RestOptions
      */
     const REQUEST_BODY_KEY_OPTIONS = 'options';
 
-	/**
-	 * Routing
-	 */
-	const ROUTE_NAMESPACE = 'rest-options/v1';
-	const ROUTE_PATH_GET_OPTIONS = '/get-options';
+    /**
+     * Routing
+     */
+    const ROUTE_NAMESPACE = 'rest-options/v1';
+    const ROUTE_PATH_GET_OPTIONS = '/get-options';
 
     public function __construct()
     {
@@ -68,9 +68,9 @@ class RestOptions
     public function registerApiRoutes()
     {
         register_rest_route(
-			self::ROUTE_NAMESPACE,
-			self::ROUTE_PATH_GET_OPTIONS,
-			[
+            self::ROUTE_NAMESPACE,
+            self::ROUTE_PATH_GET_OPTIONS,
+            [
                 'methods' => 'POST',
                 'permission_callback' => [$this, 'validateApiKey'],
                 'callback' => [$this, 'handleGetOptionsRestApiRequest']
@@ -119,19 +119,21 @@ class RestOptions
             return new WP_Error('invalid_param', 'Options must be an array', ['status' => 400]);
         }
 
-		if (empty($optionsRequested)) {
-			return new WP_Error('invalid_param', 'Options array must not be empty', ['status' => 400]);
-		}
+        if (empty($optionsRequested)) {
+            return new WP_Error('invalid_param', 'Options array must not be empty', ['status' => 400]);
+        }
 
-		if (count($optionsRequested) > 100) {
-			return new WP_Error('invalid_param', 'Options array must not contain more than 100 items', ['status' => 400]);
-		}
+        if (count($optionsRequested) > 100) {
+            return new WP_Error('invalid_param',
+                'Options array must not contain more than 100 items',
+                ['status' => 400]);
+        }
 
-		foreach ($optionsRequested as $oneOptionRequested) {
-			if (false === is_string($oneOptionRequested)) {
-				return new WP_Error('invalid_param', 'Each option must be a string', ['status' => 400]);
-			}
-		}
+        foreach ($optionsRequested as $oneOptionRequested) {
+            if (false === is_string($oneOptionRequested)) {
+                return new WP_Error('invalid_param', 'Each option must be a string', ['status' => 400]);
+            }
+        }
 
         $optionsRetrived = [];
         $restrictionType = get_option(self::OPTION_NAME_RESTRICTION_TYPE, self::DEFAULT_RESTRICTION_TYPE);
@@ -161,16 +163,16 @@ class RestOptions
             }
         }
 
-		// This is the default response format for the WP REST API. It's weird, but we'll use it.
-	    // Because we want to keep the response format consistent with error responses.
-		$response = [
-			"code" => "success",
-			"message" => "Options retrieved successfully.",
-			"data" => [
-				"status" => 200,
-				"options" => $optionsRetrived
-			]
-		];
+        // This is the default response format for the WP REST API. It's weird, but we'll use it.
+        // Because we want to keep the response format consistent with error responses.
+        $response = [
+            "code" => "success",
+            "message" => "Options retrieved successfully.",
+            "data" => [
+                "status" => 200,
+                "options" => $optionsRetrived
+            ]
+        ];
 
         return rest_ensure_response($response);
     }
@@ -308,51 +310,52 @@ class RestOptions
         return '<input type="submit" name="' . $name . '" class="button button-primary" value="' . $value . '" />';
     }
 
-	private function buildDocumentation() {
-		$endpoint = site_url() . '/wp-json/' . self::ROUTE_NAMESPACE . self::ROUTE_PATH_GET_OPTIONS;
+    private function buildDocumentation()
+    {
+        $endpoint = site_url() . '/wp-json/' . self::ROUTE_NAMESPACE . self::ROUTE_PATH_GET_OPTIONS;
 
-		return '<h1>Documentation</h1>'
+        return '<h1>Documentation</h1>'
             . '<p>Use the below settings to configure whether to allow or restrict options and which options to allow or restrict.</p>'
-			. '<h3>Example Request</h3>'
-			. '<pre>'
-				. 'POST ' . $endpoint . ' HTTP/1.1' . "\n"
-				. 'Content-Type: application/json' . "\n"
-				. 'x-api-key: YOUR_API_KEY' . "\n"
-				. "\n"
-				. '{' . "\n"
-				. '  "options": ["option_name_1", "option_name_2"]' . "\n"
-				. '}' . "\n"
-			. '</pre>'
-	        . '<p>Replace <code>YOUR_API_KEY</code> with the API key you generated.</p>'
-	        . '<p>Replace <code>option_name_1</code> and <code>option_name_2</code> with the option names you want to retrieve.</p>'
-	        . '<p>To make such a request, here is an example using cURL:</p>'
+            . '<h3>Example Request</h3>'
             . '<pre>'
-                . 'curl -X POST ' . $endpoint . ' \\' . "\n"
-                . '  -H "Content-Type: application/json" \\' . "\n"
-                . '  -H "x-api-key: YOUR_API_KEY" \\' . "\n"
-                . '  -d \'{"options": ["option_name_1", "option_name_2"]}\''
+            . 'POST ' . $endpoint . ' HTTP/1.1' . "\n"
+            . 'Content-Type: application/json' . "\n"
+            . 'x-api-key: YOUR_API_KEY' . "\n"
+            . "\n"
+            . '{' . "\n"
+            . '  "options": ["option_name_1", "option_name_2"]' . "\n"
+            . '}' . "\n"
             . '</pre>'
-			. '<h3>Example Response</h3>'
-	        . '<p>Successful response will be in the following format:</p>'
-			. '<pre>'
-			. 'HTTP/1.1 200 OK' . "\n"
-			. 'Content-Type: application/json' . "\n"
-			. "\n"
-			. '{' . "\n"
-			. '  "option_name_1": "option_value_1",' . "\n"
-			. '  "option_name_2": "option_value_2"' . "\n"
-			. '}' . "\n"
-			. '</pre>'
-	        . '<p>Here are the other cases:</p>'
-	        . '<ul style="list-style-type: disc; margin-left: 20px;">'
-		        . '<li>If one of the requested options does not exist, its value will be null.</li>'
-		        . '<li>If one of the requested options is not allowed, it will not be included in the response.</li>'
-                . '<li>If the API key is invalid, the response will be a 401 Unauthorized.</li>'
-		        . '<li>If the request body is not a JSON object, the response will be a 400 Bad Request.</li>'
-		        . '<li>If the request body does not contain an "options" key, the response will be a 400 Bad Request.</li>'
-		        . '<li>If the "options" key is not an array, the response will be a 400 Bad Request.</li>'
+            . '<p>Replace <code>YOUR_API_KEY</code> with the API key you generated.</p>'
+            . '<p>Replace <code>option_name_1</code> and <code>option_name_2</code> with the option names you want to retrieve.</p>'
+            . '<p>To make such a request, here is an example using cURL:</p>'
+            . '<pre>'
+            . 'curl -X POST ' . $endpoint . ' \\' . "\n"
+            . '  -H "Content-Type: application/json" \\' . "\n"
+            . '  -H "x-api-key: YOUR_API_KEY" \\' . "\n"
+            . '  -d \'{"options": ["option_name_1", "option_name_2"]}\''
+            . '</pre>'
+            . '<h3>Example Response</h3>'
+            . '<p>Successful response will be in the following format:</p>'
+            . '<pre>'
+            . 'HTTP/1.1 200 OK' . "\n"
+            . 'Content-Type: application/json' . "\n"
+            . "\n"
+            . '{' . "\n"
+            . '  "option_name_1": "option_value_1",' . "\n"
+            . '  "option_name_2": "option_value_2"' . "\n"
+            . '}' . "\n"
+            . '</pre>'
+            . '<p>Here are the other cases:</p>'
+            . '<ul style="list-style-type: disc; margin-left: 20px;">'
+            . '<li>If one of the requested options does not exist, its value will be null.</li>'
+            . '<li>If one of the requested options is not allowed, it will not be included in the response.</li>'
+            . '<li>If the API key is invalid, the response will be a 401 Unauthorized.</li>'
+            . '<li>If the request body is not a JSON object, the response will be a 400 Bad Request.</li>'
+            . '<li>If the request body does not contain an "options" key, the response will be a 400 Bad Request.</li>'
+            . '<li>If the "options" key is not an array, the response will be a 400 Bad Request.</li>'
             . '</ul>';
-	}
+    }
 }
 
 new RestOptions();
