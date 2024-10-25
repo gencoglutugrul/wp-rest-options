@@ -8,7 +8,8 @@ Version: 1.0
 Author: Tuğrul Gençoğlu
 Author URI: https://github.com/gencoglutugrul
 License: GPL2
-PHP Version: >= 5.6
+Requires at least: 4.4
+Requires PHP: 5.6
 */
 
 /** @noinspection SpellCheckingInspection */
