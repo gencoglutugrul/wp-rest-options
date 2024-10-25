@@ -81,10 +81,10 @@ class RestOptions
     public function registerSettingsPage()
     {
         add_options_page(
-            'Configuration for Options Rest API',
+            'Rest Options Plugin Settings',
             'Rest Options',
             'manage_options',
-            'options-rest-api-configuration',
+            'rest-options-settings',
             [$this, 'renderSettingsPage']
         );
     }
@@ -190,8 +190,9 @@ class RestOptions
     private function buildSettingsPage()
     {
         return '<div class="wrap">'
-            . '<h1>Options Rest  Settings</h1>'
+            . '<h1>Settings for Rest Options Plugin</h1>'
             . $this->buildApiKeyForm()
+            . '<hr>'
             . $this->buildRestrictionForm()
             . '<hr>'
             . $this->buildDocumentation()
@@ -202,7 +203,7 @@ class RestOptions
     {
         $apiKey = get_option(self::OPTION_NAME_API_KEY, 'No API key generated yet.');
 
-        return '<form method="POST">'
+        return '<form method="POST" style="margin-bottom:20px;">'
             . '<h2>API Key</h2>'
             . '<p><strong>Current API Key:</strong> ' . esc_html($apiKey) . '</p>'
             . $this->buildSubmitButton(self::INPUT_NAME_GENERATE_API_KEY, 'Generate New API Key')
@@ -214,8 +215,10 @@ class RestOptions
         $restrictionList = get_option(self::OPTION_NAME_RESTRICTION_LIST, self::DEFAULT_RESTRICTION_LIST);
         $restrictionType = get_option(self::OPTION_NAME_RESTRICTION_TYPE, self::DEFAULT_RESTRICTION_TYPE);
 
-        return '<form method="POST">'
-            . '<h2>Allowed/Restricted Options</h2>'
+        return '<form method="POST" style="margin-bottom:20px;">'
+            . '<h2>Allow/Restrict Options</h2>'
+            . '<label><strong>Restriction Type:</strong></label>'
+            . '<p>Choose how you want to restrict the options.</p>'
             . $this->buildInputRadioAllowOnly($restrictionType)
             . $this->buildInputRadioRestrictOnly($restrictionType)
             . $this->buildInputRadioAllowAll($restrictionType)
@@ -226,7 +229,9 @@ class RestOptions
 
     private function buildTextareaForRestrictionList($restrictionList)
     {
-        return '<p><textarea rows="5" cols="50" placeholder="Enter option names, one per line" name="'
+        return '<label><strong>Options You Want to Allow/Restrict:</strong></label>'
+            . '<p>Enter the names of the options you want to allow or restrict, one per line.</p>'
+            . '<p><textarea rows="5" cols="50" placeholder="Enter option names, one per line" name="'
             . self::INPUT_NAME_RESTRICTION_LIST . '">' .
             esc_textarea($restrictionList)
             . '</textarea></p>';
@@ -237,7 +242,7 @@ class RestOptions
         return $this->buildInputRadioForRestrictionType(
             self::RESTRICTION_TYPE_ALLOW_ONLY,
             $selectedOption,
-            'Allow only these options'
+            'Allow only: Only the following options will be allowed to read. The rest will be restricted.'
         );
     }
 
@@ -246,7 +251,7 @@ class RestOptions
         return $this->buildInputRadioForRestrictionType(
             self::RESTRICTION_TYPE_RESTRICT_ONLY,
             $selectedOption,
-            'Restrict these options'
+            'Restrict only: Only the following options will be restricted. The rest will be allowed to read.'
         );
     }
 
@@ -255,7 +260,7 @@ class RestOptions
         return $this->buildInputRadioForRestrictionType(
             self::RESTRICTION_TYPE_ALLOW_ALL,
             $selectedOption,
-            'Allow all options'
+            'Allow all: All options will be allowed to read.'
         );
     }
 
@@ -264,12 +269,11 @@ class RestOptions
         $selectedOption,
         $text
     ) {
-        $checked = checked($selectedOption, $value, false);
+        $checked = $selectedOption === $value ? ' checked="true" ' : '';
 
         return '<p><label>'
-            . '<input type="radio" name="'
-            . self::INPUT_NAME_RESTRICTION_TYPE
-            . '" value="' . $value . '" ' . $checked . ' /> '
+            . '<input type="radio" name="' . self::INPUT_NAME_RESTRICTION_TYPE
+            . '" value="' . $value . '"' . $checked . '/> '
             . $text
             . '</label></p>';
     }
@@ -282,19 +286,29 @@ class RestOptions
 	private function buildDocumentation() {
 		$endpoint = site_url() . '/wp-json/' . self::ROUTE_NAMESPACE . self::ROUTE_PATH_GET_OPTIONS;
 
-		return '<h2>Documentation</h2>'
+		return '<h1>Documentation</h1>'
             . '<p>Use the below settings to configure whether to allow or restrict options and which options to allow or restrict.</p>'
-			. '<p>Example Request</p>'
+			. '<h3>Example Request</h3>'
 			. '<pre>'
-			. 'POST ' . $endpoint . ' HTTP/1.1' . "\n"
-			. 'Content-Type: application/json' . "\n"
-			. 'x-api-key: YOUR_API_KEY' . "\n"
-			. "\n"
-			. '{' . "\n"
-			. '  "options": ["option_name_1", "option_name_2"]' . "\n"
-			. '}' . "\n"
+				. 'POST ' . $endpoint . ' HTTP/1.1' . "\n"
+				. 'Content-Type: application/json' . "\n"
+				. 'x-api-key: YOUR_API_KEY' . "\n"
+				. "\n"
+				. '{' . "\n"
+				. '  "options": ["option_name_1", "option_name_2"]' . "\n"
+				. '}' . "\n"
 			. '</pre>'
-			. '<p>Example Response</p>'
+	        . '<p>Replace <code>YOUR_API_KEY</code> with the API key you generated.</p>'
+	        . '<p>Replace <code>option_name_1</code> and <code>option_name_2</code> with the option names you want to retrieve.</p>'
+	        . '<p>To make such a request, here is an example using cURL:</p>'
+            . '<pre>'
+                . 'curl -X POST ' . $endpoint . ' \\' . "\n"
+                . '  -H "Content-Type: application/json" \\' . "\n"
+                . '  -H "x-api-key: YOUR_API_KEY" \\' . "\n"
+                . '  -d \'{"options": ["option_name_1", "option_name_2"]}\''
+            . '</pre>'
+			. '<h3>Example Response</h3>'
+	        . '<p>Successful response will be in the following format:</p>'
 			. '<pre>'
 			. 'HTTP/1.1 200 OK' . "\n"
 			. 'Content-Type: application/json' . "\n"
@@ -304,15 +318,15 @@ class RestOptions
 			. '  "option_name_2": "option_value_2"' . "\n"
 			. '}' . "\n"
 			. '</pre>'
-			. '<p>About the restrictions:</p>'
-			. '<ul>'
-			. '<li><strong>Allow only these options:</strong> Only the options listed in the textarea will be allowed.</li>'
-			. '<li><strong>Restrict these options:</strong> All options except the ones listed in the textarea will be allowed.</li>'
-			. '<li><strong>Allow all options:</strong> All options will be allowed.</li>'
-			. '</ul>'
-		    . '<p>If a requested option is not allowed, it will not be included in the response.</p>'
-			. '<p>If a requested option does not exist, it\'s value will be null.</p>'
-			. '<p>If the API key is invalid, the response will be a 401 Unauthorized.</p>';
+	        . '<p>Here are the other cases:</p>'
+	        . '<ul style="list-style-type: disc; margin-left: 20px;">'
+		        . '<li>If one of the requested options does not exist, its value will be null.</li>'
+		        . '<li>If one of the requested options is not allowed, it will not be included in the response.</li>'
+                . '<li>If the API key is invalid, the response will be a 401 Unauthorized.</li>'
+		        . '<li>If the request body is not a JSON object, the response will be a 400 Bad Request.</li>'
+		        . '<li>If the request body does not contain an "options" key, the response will be a 400 Bad Request.</li>'
+		        . '<li>If the "options" key is not an array, the response will be a 400 Bad Request.</li>'
+            . '</ul>';
 	}
 }
 
